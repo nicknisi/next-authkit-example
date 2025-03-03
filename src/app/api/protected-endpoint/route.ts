@@ -21,9 +21,51 @@ export const GET = async (request: NextRequest) => {
     await artificialDelay(initialDelay);
 
     // Use authkit to verify the user is authenticated
-    const { session } = await authkit(request, {
-      debug: true, // Enable debug for this request
-    });
+    let session;
+    let authError;
+
+    try {
+      // First attempt to get session
+      console.log(`Request ${requestId} attempting authentication...`);
+      const authResult = await authkit(request, {
+        debug: true, // Enable debug for this request
+      });
+
+      if (authResult.authorizationUrl) {
+        console.log(
+          `Request ${requestId} got auth URL: ${authResult.authorizationUrl.substring(0, 100)}...`,
+        );
+      }
+
+      session = authResult.session;
+      console.log(
+        `Request ${requestId} auth succeeded on first try. User: ${session.user?.email || "none"}`,
+      );
+    } catch (error) {
+      console.log(`Request ${requestId} first auth attempt failed:`, error);
+      authError = error;
+
+      // If first attempt fails, wait a bit and try once more
+      // This gives the first request time to refresh the token
+      await artificialDelay(300 + Math.random() * 200);
+      console.log(
+        `Request ${requestId} first auth attempt failed, will retry once after delay`,
+      );
+      authError = error;
+
+      // If first attempt fails, wait a bit and try once more
+      // This gives the first request time to refresh the token
+      await artificialDelay(300 + Math.random() * 200);
+
+      try {
+        const authResult = await authkit(request, { debug: true });
+        session = authResult.session;
+        console.log(`Request ${requestId} retry auth succeeded!`);
+      } catch (retryError) {
+        console.error(`Request ${requestId} retry also failed:`, retryError);
+        throw authError; // Throw the original error
+      }
+    }
 
     if (!session || !session.user) {
       return NextResponse.json(
@@ -34,7 +76,7 @@ export const GET = async (request: NextRequest) => {
 
     // Add another substantial delay after authentication
     // This gives other concurrent requests time to attempt token refresh
-    const secondDelay = Math.floor(Math.random() * 500) + 300;
+    const secondDelay = Math.floor(Math.random() * 300) + 200;
     console.log(
       `Request ${requestId} continuing with second delay of ${secondDelay}ms`,
     );

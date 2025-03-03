@@ -19,7 +19,7 @@ export default function TestConcurrentPage() {
     console.log("Starting multiple concurrent requests...");
 
     // Use more requests to increase the chance of seeing the race condition
-    const concurrentRequests = 10;
+    const concurrentRequests = 15;
 
     // Make concurrent requests to increase the chance of race conditions
     const promises = Array(concurrentRequests)

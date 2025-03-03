@@ -1,9 +1,28 @@
 "use client";
 
-import { Button, Card, Flex, Text } from "@radix-ui/themes";
 import { useState } from "react";
+import { Button, Text, Flex, Box, Card, Tabs } from "@radix-ui/themes";
 import { expireAccessTokenAction } from "../actions/expire-access-token";
 import { expireTokenAction } from "../actions/expire-token";
+
+// Function to make an authenticated request to force token validation
+const testAuthentication = async () => {
+  try {
+    const response = await fetch("/api/protected-endpoint?id=test");
+    const data = await response.json();
+    return {
+      status: response.status,
+      message: response.ok
+        ? `Authentication successful: ${data.user?.email || "unknown user"}`
+        : `Authentication failed: ${data.error || "Unknown error"}`,
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      message: `Error testing authentication: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+};
 
 export function TokenExpirer() {
   const [status, setStatus] = useState<string | null>(null);
@@ -14,7 +33,13 @@ export function TokenExpirer() {
       setLoading(true);
       setStatus("Expiring access token while preserving refresh token...");
       const result = await expireAccessTokenAction();
-      setStatus(result.message);
+
+      // Test auth status right after expiring
+      const authTest = await testAuthentication();
+
+      setStatus(
+        `${result.message}\n\nAuth test: ${authTest.message} (${authTest.status})`,
+      );
     } catch (error) {
       setStatus(
         `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
@@ -39,10 +64,18 @@ export function TokenExpirer() {
     }
   };
 
+  const handleNavigateToSignInPage = () => {
+    // Create an expired token manually in the current page, then navigate
+    // This scenario reliably shows the token refresh flow
+    expireAccessTokenAction().then(() => {
+      window.location.href = "/account";
+    });
+  };
+
   return (
     <Card
       size="2"
-      style={{ marginTop: "20px", width: "100%", maxWidth: "500px" }}
+      style={{ marginTop: "20px", width: "100%", maxWidth: "600px" }}
     >
       <Flex direction="column" gap="2">
         <Text weight="bold">Token Testing Tools</Text>
@@ -50,33 +83,74 @@ export function TokenExpirer() {
           These tools help reproduce the refresh token race condition.
         </Text>
 
-        <Flex gap="2">
-          <Button
-            color="yellow"
-            onClick={expireAccessToken}
-            size="2"
-            disabled={loading}
-          >
-            {loading ? "Working..." : "Expire Access Token Only"}
-          </Button>
+        <Tabs.Root defaultValue="method1">
+          <Tabs.List>
+            <Tabs.Trigger value="method1">Method 1: Expire JWT</Tabs.Trigger>
+            <Tabs.Trigger value="method2">Method 2: Redirect</Tabs.Trigger>
+            <Tabs.Trigger value="method3">Method 3: Clear</Tabs.Trigger>
+          </Tabs.List>
 
-          <Button
-            color="red"
-            onClick={clearSession}
-            size="2"
-            disabled={loading}
-          >
-            {loading ? "Working..." : "Clear Session"}
-          </Button>
-        </Flex>
+          <Box pt="3">
+            <Tabs.Content value="method1">
+              <Flex direction="column" gap="2">
+                <Text size="2">
+                  This method replaces the access token with an expired JWT
+                  while keeping the refresh token valid. Then it makes
+                  concurrent API requests.
+                </Text>
 
-        <Text size="2" color="blue">
-          Use &quot;Expire Access Token Only&quot; to simulate token expiration
-          while keeping refresh token valid.
-        </Text>
+                <Button
+                  color="yellow"
+                  onClick={expireAccessToken}
+                  size="2"
+                  disabled={loading}
+                >
+                  {loading ? "Working..." : "Expire Access Token Only"}
+                </Button>
+              </Flex>
+            </Tabs.Content>
+
+            <Tabs.Content value="method2">
+              <Flex direction="column" gap="2">
+                <Text size="2">
+                  This method will expire the token and then immediately
+                  navigate to the account page, which should trigger a visible
+                  redirect to the auth service for refresh.
+                </Text>
+
+                <Button
+                  color="blue"
+                  onClick={handleNavigateToSignInPage}
+                  size="2"
+                  disabled={loading}
+                >
+                  {loading ? "Working..." : "Expire Token & Navigate"}
+                </Button>
+              </Flex>
+            </Tabs.Content>
+
+            <Tabs.Content value="method3">
+              <Flex direction="column" gap="2">
+                <Text size="2">
+                  This method completely removes the session cookie, which
+                  forces re-authentication.
+                </Text>
+
+                <Button
+                  color="red"
+                  onClick={clearSession}
+                  size="2"
+                  disabled={loading}
+                >
+                  {loading ? "Working..." : "Clear Session"}
+                </Button>
+              </Flex>
+            </Tabs.Content>
+          </Box>
+        </Tabs.Root>
 
         {status && (
-          <Text size="2" color="orange">
+          <Text size="2" color="orange" style={{ whiteSpace: "pre-line" }}>
             {status}
           </Text>
         )}
