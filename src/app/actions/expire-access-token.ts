@@ -1,13 +1,14 @@
 "use server";
 
+import { sealData, unsealData } from "iron-session";
+import { decodeJwt, SignJWT } from "jose";
 import { cookies } from "next/headers";
-import { unsealData, sealData } from "iron-session";
-import { decodeJwt, SignJWT, jwtDecrypt } from "jose";
 import { TextEncoder } from "util";
+import { getCookieOptions } from "@workos-inc/authkit-nextjs";
 
 // Replace with the actual cookie password from your .env file
 const COOKIE_PASSWORD = process.env.WORKOS_COOKIE_PASSWORD || "";
-const COOKIE_NAME = "wos-session";
+const COOKIE_NAME = process.env.WORKOS_COOKIE_NAME || "wos-session";
 
 export async function expireAccessTokenAction() {
   try {
@@ -63,13 +64,10 @@ export async function expireAccessTokenAction() {
       password: COOKIE_PASSWORD,
     });
 
-    cookieStore.set(COOKIE_NAME, sealedData, {
-      path: "/",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-    });
+    const cookieOptions = getCookieOptions();
+
+    console.log("\n\nCOOKIE OPTIONS", cookieOptions);
+    cookieStore.set(COOKIE_NAME, sealedData, cookieOptions);
 
     return {
       success: true,

@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 export async function expireTokenAction() {
   try {
-    const cookieName = "wos-session"; // Default cookie name for WorkOS AuthKit
+    const cookieName = process.env.WORKOS_COOKIE_NAME || "wos-session"; // Default cookie name for WorkOS AuthKit
     const cookieStore = await cookies();
 
     // Check if the cookie exists

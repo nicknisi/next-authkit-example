@@ -26,7 +26,7 @@ export const GET = async (request: NextRequest) => {
 
     try {
       // First attempt to get session
-      console.log(`Request ${requestId} attempting authentication...`);
+      console.log(`\nRequest ${requestId} attempting authentication...`);
       const authResult = await authkit(request, {
         debug: true, // Enable debug for this request
       });
