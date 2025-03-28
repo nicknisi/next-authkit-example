@@ -22,7 +22,7 @@ function assertValidSamSite(sameSite: string): asserts sameSite is ValidSameSite
   }
 }
 
-const {WORKOS_REDIRECT_URI = '', WORKOS_COOKIE_SAMESITE, WORKOS_COOKIE_MAX_AGE, WORKOS_COOKIE_DOMAIN} = process.env;
+const {NEXT_PUBLIC_WORKOS_REDIRECT_URI = '', WORKOS_COOKIE_SAMESITE, WORKOS_COOKIE_MAX_AGE, WORKOS_COOKIE_DOMAIN} = process.env;
 
 function getCookieOptions(): CookieOptions;
 function getCookieOptions(redirectUri?: string | null): CookieOptions;
@@ -42,7 +42,7 @@ function getCookieOptions(
   asString: boolean = false,
   expired: boolean = false,
 ): CookieOptions | string {
-  const url = new URL(redirectUri || WORKOS_REDIRECT_URI);
+  const url = new URL(redirectUri || NEXT_PUBLIC_WORKOS_REDIRECT_URI);
   const sameSite = WORKOS_COOKIE_SAMESITE || 'lax';
   assertValidSamSite(sameSite);
   const secure = sameSite.toLowerCase() === 'none' ? true : url.protocol === 'https:';
