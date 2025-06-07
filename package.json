@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "reset": "rm -rf node_modules && rm -rf .next && npm i",
@@ -15,6 +15,8 @@
     "@radix-ui/react-icons": "^1.3.2",
     "@radix-ui/themes": "^3.2.1",
     "@workos-inc/authkit-nextjs": "^2.1.0",
+    "@workos-inc/authkit-ssr": "^0.0.1-alpha.0",
+    "@workos-inc/node": "^7.53.0",
     "next": "^15.2.3",
     "react": "^18",
     "react-dom": "^18"
@@ -28,5 +30,7 @@
     "relative-deps": "^1.0.7",
     "typescript": "^5"
   },
-  "relativeDependencies": {}
+  "relativeDependencies": {
+    "@workos-inc/authkit-nextjs": "../authkit-nextjs"
+  }
 }

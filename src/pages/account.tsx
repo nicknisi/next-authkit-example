@@ -1,9 +1,12 @@
-import { withAuth } from "@workos-inc/authkit-nextjs";
+import { 
+  withAuth,
+  buildWorkOSProps,
+  getSignInUrl 
+} from "@workos-inc/authkit-nextjs";
 import { Text, Heading, TextField, Flex, Box } from "@radix-ui/themes";
 
-export default async function AccountPage() {
-  const { user, role, permissions } = await withAuth({ ensureSignedIn: true });
-
+export default function AccountPage({ user, role, permissions, ...props }: any) {
+  console.log('Account page props:', { user, role, permissions, ...props });
   const userFields = [
     ["First name", user?.firstName],
     ["Last name", user?.lastName],
@@ -44,3 +47,18 @@ export default async function AccountPage() {
     </>
   );
 }
+
+export const getServerSideProps = withAuth(async ({ auth }) => {
+  const { user, role, permissions } = auth;
+  const signInUrl = await getSignInUrl();
+
+  return {
+    props: {
+      ...buildWorkOSProps({ session: auth }),
+      user,
+      role,
+      permissions,
+      signInUrl,
+    },
+  };
+}, { ensureSignedIn: true });

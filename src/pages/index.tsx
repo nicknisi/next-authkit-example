@@ -1,10 +1,20 @@
 import NextLink from "next/link";
-import { withAuth } from "@workos-inc/authkit-nextjs";
+import { 
+  withAuth,
+  buildWorkOSProps,
+  getSignInUrl 
+} from "@workos-inc/authkit-nextjs";
+import { useAuth } from "@workos-inc/authkit-nextjs/components";
 import { Button, Flex, Heading, Text } from "@radix-ui/themes";
-import { SignInButton } from "./components/sign-in-button";
+import { SignInButton } from "../components/sign-in-button";
 
-export default async function HomePage() {
-  const { user } = await withAuth();
+interface HomeProps {
+  signInUrl: string;
+}
+
+export default function HomePage({ signInUrl }: HomeProps) {
+  const { user } = useAuth();
+  
   return (
     <Flex direction="column" align="center" gap="2">
       {user ? (
@@ -34,3 +44,14 @@ export default async function HomePage() {
     </Flex>
   );
 }
+
+export const getServerSideProps = withAuth(async ({ auth }) => {
+  const signInUrl = await getSignInUrl();
+
+  return {
+    props: {
+      ...buildWorkOSProps({ session: auth }),
+      signInUrl,
+    },
+  };
+});
